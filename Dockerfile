@@ -16,7 +16,7 @@ RUN --mount=type=bind,source=./package.json,target=./package.json \
 
 
 # Stage 2: Create the production image
-FROM node:23-alpine AS production
+FROM node:24-alpine AS production
 
 WORKDIR /app
 
