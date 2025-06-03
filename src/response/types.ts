@@ -2,24 +2,28 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateResponseDto {
   @ApiProperty({
-    description: '',
+    description:
+      'The topic of the question for which the response is being submitted.',
     required: true,
   })
   topic: string;
 
   @ApiProperty({
-    description: '',
+    description: 'The specific question text to which to respond to.',
     required: true,
   })
   question: string;
 
   @ApiProperty({
-    description: '',
+    description:
+      'Optional complementary information related to the question or topic.',
     required: false,
   })
   complement?: string;
 
   @ApiProperty({
+    description:
+      'Optional additional instructions for evaluating the response.',
     required: false,
   })
   extraPrompt?: string;
@@ -27,13 +31,14 @@ export class CreateResponseDto {
 
 export class ResponseDto {
   @ApiProperty({
-    description: '',
+    description: "The text of the question's response.",
     required: true,
   })
   public readonly r: string;
 
   @ApiProperty({
-    description: '',
+    description:
+      'Indicates whether the response is considered good (true) or not (false).',
     required: true,
   })
   public readonly g: boolean;
@@ -46,28 +51,29 @@ export class ResponseDto {
 
 export class ResponsesDto {
   @ApiProperty({
-    description: '',
+    description: 'A list of response evaluations.',
     required: true,
     type: [ResponseDto],
   })
   public readonly responses: ResponseDto[];
 
   @ApiProperty({
-    description: '',
+    description: 'The total number of evaluated responses.',
     required: true,
     type: Number,
   })
   public readonly count: number;
 
   @ApiProperty({
-    description: '',
+    description: 'The number of responses evaluated as good.',
     required: true,
     type: Number,
   })
   public readonly countGood: number;
 
   @ApiProperty({
-    description: '',
+    description:
+      'The original question text for which these responses were submitted.',
     required: true,
   })
   public readonly question: string;

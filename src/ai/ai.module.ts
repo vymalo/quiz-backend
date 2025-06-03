@@ -2,7 +2,12 @@ import { Module } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { createOpenAI, OpenAIProvider } from '@ai-sdk/openai';
 import { ConfigService } from '@nestjs/config';
-import { TOKEN_QUESTION, TOKEN_QUESTION_MODEL, TOKEN_RESPONSE, TOKEN_RESPONSE_MODEL } from './constants';
+import {
+  TOKEN_QUESTION,
+  TOKEN_QUESTION_MODEL,
+  TOKEN_RESPONSE,
+  TOKEN_RESPONSE_MODEL,
+} from './constants';
 
 @Module({
   providers: [

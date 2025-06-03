@@ -9,15 +9,18 @@ export class ResponseController {
   constructor(private readonly service: ResponseService) {}
 
   @ApiOperation({
-    description: '',
-    summary: 'create_response',
+    description:
+      'Submits a response for a given question and evaluates its correctness.',
+    summary: 'Submit and evaluate a response',
+    operationId: 'create_response',
   })
   @ApiBody({
-    description: '',
+    description: "The question and the user's response.",
     type: CreateResponseDto,
   })
   @ApiOkResponse({
-    description: '',
+    description:
+      'Returns the evaluation of the response, indicating good and bad aspects.',
     type: ResponsesDto,
   })
   @Post()

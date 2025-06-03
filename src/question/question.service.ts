@@ -14,6 +14,7 @@ export class QuestionService {
   private prepareTemplate(dto: CreateQuestionDto) {
     return `
 Please create questions about "${dto.topic}".
+${dto.complement && 'More specifically:'}
 ${dto.complement ?? ''}
 
 ${dto.extraPrompt && 'Additional prompt:'}

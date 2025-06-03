@@ -9,15 +9,17 @@ export class QuestionController {
   constructor(private readonly service: QuestionService) {}
 
   @ApiOperation({
-    description: '',
-    summary: 'create_question',
+    description:
+      'Creates a new set of questions based on the provided topic and difficulty.',
+    summary: 'Create new questions',
+    operationId: 'create_question',
   })
   @ApiBody({
-    description: '',
+    description: 'The topic and difficulty level for generating questions.',
     type: CreateQuestionDto,
   })
   @ApiOkResponse({
-    description: '',
+    description: 'Successfully created questions.',
     type: QuestionsDto,
   })
   @Post()
