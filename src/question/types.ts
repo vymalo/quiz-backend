@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateQuestionsDto {
+export class CreateQuestionDto {
   @ApiProperty({
     description: '',
     required: true,

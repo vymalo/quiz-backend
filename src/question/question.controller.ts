@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateQuestionsDto, QuestionDto, QuestionsDto } from './types';
+import { CreateQuestionDto, QuestionsDto } from './types';
 import { QuestionService } from './question.service';
 
 @ApiTags('questions')
@@ -14,7 +14,7 @@ export class QuestionController {
   })
   @ApiBody({
     description: '',
-    type: CreateQuestionsDto,
+    type: CreateQuestionDto,
   })
   @ApiOkResponse({
     description: '',
@@ -22,7 +22,7 @@ export class QuestionController {
   })
   @Post()
   @HttpCode(200)
-  public async createQuestions(@Body() dto: CreateQuestionsDto) {
+  public async createQuestions(@Body() dto: CreateQuestionDto) {
     const questions = await this.service.createQuestions(dto);
     return new QuestionsDto(questions);
   }
