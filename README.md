@@ -18,6 +18,7 @@ The service uses OpenAI models to generate high-quality questions and responses,
 - **OpenAPI Documentation**: Comprehensive API documentation with Swagger UI
 - **Containerized Deployment**: Easy deployment with Docker
 - **Environment Configuration**: Flexible configuration through environment variables
+- **Kubernetes Deployment**: Deploy to Kubernetes using Helm charts
 
 ## Tech Stack
 
@@ -26,6 +27,7 @@ The service uses OpenAI models to generate high-quality questions and responses,
 - **AI Integration**: OpenAI API via AI SDK
 - **API Documentation**: Swagger/OpenAPI
 - **Containerization**: Docker
+- **Orchestration**: Kubernetes with Helm
 
 ## API Endpoints
 
@@ -89,6 +91,35 @@ docker build -t quiz-backend .
 # Run the container
 docker run -p 3000:3000 --env-file ./.env quiz-backend
 ```
+
+### Kubernetes Deployment with Helm
+
+The application can be deployed to a Kubernetes cluster using the provided Helm chart.
+
+#### Prerequisites
+
+- Kubernetes 1.19+
+- Helm 3.2.0+
+
+#### Installing the Chart
+
+```bash
+# Update dependencies
+helm dependency update ./helm/quiz-backend
+
+# Install the chart
+helm install quiz-backend ./helm/quiz-backend
+```
+
+#### Uninstalling the Chart
+
+```bash
+helm delete quiz-backend
+```
+
+#### Configuration
+
+See the [Helm chart README](./helm/quiz-backend/README.md) for detailed configuration options.
 
 ## API Documentation
 
