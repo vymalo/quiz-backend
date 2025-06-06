@@ -21,7 +21,7 @@ FROM node:24-alpine AS production
 WORKDIR /app
 
 # Create a non-root user and group for better security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S -g 1001 nodejs && adduser -S nestjs -G nodejs -u 1001
 
 # Install only production dependencies
 # Use mount cache for node_modules to speed up subsequent builds
@@ -37,10 +37,10 @@ COPY --from=builder /app/dist .
 # Example: docker run -p 3000:3000 --env-file ./.env quiz-backend
 
 # Set ownership of the application files to the non-root user
-RUN chown -R appuser:appgroup /app
+RUN chown -R nestjs:nodejs /app
 
 # Switch to the non-root user
-USER appuser
+USER nextjs
 
 # Expose the port the application runs on.
 # Your src/main.ts uses process.env.PORT or defaults to 3000.

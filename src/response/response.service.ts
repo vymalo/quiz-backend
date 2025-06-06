@@ -10,8 +10,14 @@ export class ResponseService {
     const templateGood = this.prepareTemplate(dto, true);
     const templateBad = this.prepareTemplate(dto, false);
     const [goodResponses, badResponses] = await Promise.all([
-      this.aiService.createResponse(dto.topic, templateGood, true),
-      this.aiService.createResponse(dto.topic, templateBad, false),
+      this.aiService.createResponse(dto.topic, templateGood, true, {
+        local_db: dto.local_db,
+        web: dto.web,
+      }),
+      this.aiService.createResponse(dto.topic, templateBad, false, {
+        local_db: dto.local_db,
+        web: dto.web,
+      }),
     ]);
 
     return { goodResponses, badResponses };

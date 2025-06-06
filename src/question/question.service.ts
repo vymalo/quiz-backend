@@ -8,7 +8,10 @@ export class QuestionService {
 
   public async createQuestions(dto: CreateQuestionDto) {
     const template = this.prepareTemplate(dto);
-    return this.aiService.createQuestion(dto.topic, template);
+    return this.aiService.createQuestion(dto.topic, template, {
+      local_db: dto.local_db,
+      web: dto.web,
+    });
   }
 
   private prepareTemplate(dto: CreateQuestionDto) {

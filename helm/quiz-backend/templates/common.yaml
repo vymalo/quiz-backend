@@ -1,9 +1,2 @@
-{{/* Common labels and metadata */}}
-{{- define "quiz-backend.commonLabels" -}}
-helm.sh/chart: {{ include "quiz-backend.chart" . }}
-{{ include "quiz-backend.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
+{{/* Generate all manifests from the common library */}}
+{{- include "bjw-s.common.loader.all" . }}

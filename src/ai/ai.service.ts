@@ -1,33 +1,55 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { generateText } from 'ai';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { generateObject, generateText, tool } from 'ai';
 import {
-  SEPARATOR,
+  TOKEN_BRAVE_SEARCH,
+  TOKEN_CHROMA_COLLECTION,
   TOKEN_QUESTION_MODEL,
   TOKEN_RESPONSE_MODEL,
+  TOKEN_SUMMARIZER_MODEL,
 } from './constants';
 import type { LanguageModelV1 } from '@ai-sdk/provider';
+import { z } from 'zod';
+import type { Collection } from 'chromadb';
+import type { BraveSearch } from 'brave-search';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AiService {
   constructor(
+    @Inject(TOKEN_SUMMARIZER_MODEL)
+    private readonly openaiSummarizerModel: LanguageModelV1,
     @Inject(TOKEN_QUESTION_MODEL)
     private readonly openaiQuestionModel: LanguageModelV1,
     @Inject(TOKEN_RESPONSE_MODEL)
     private readonly openaiResponseModel: LanguageModelV1,
+    @Inject(TOKEN_CHROMA_COLLECTION)
+    private readonly chromaCollection: (
+      local_db: string,
+    ) => Promise<Collection>,
+    @Inject(TOKEN_BRAVE_SEARCH)
+    private readonly braveSearch: BraveSearch,
+    private readonly configService: ConfigService,
   ) {}
 
-  public async createQuestion(topic: string, template: string) {
+  public async createQuestion(
+    topic: string,
+    template: string,
+    params?: Partial<Record<'local_db', string> & Record<'web', boolean>>,
+  ) {
     const { text } = await generateText({
       model: this.openaiQuestionModel,
+      tools: this.getTools({
+        ...params,
+        tooling: this.configService.get('OPENAI_QUESTION_TOOLING') === 'true',
+      }),
       prompt: template,
       temperature: 0.7,
       system: `
 You're a senior expert "${topic}".
-Your task is to generate a list of responses to a given question, separated by "${SEPARATOR}".
+Your task is to generate a list of responses to a given question.
 
 - Format in a way that the questions are easy to read.
 - Use introduction.
-- No enumeration.
 - Don't include answers.
 - They should be short and concise.
 - They should should be at least 15 items.
@@ -38,38 +60,41 @@ Your task is to generate a list of responses to a given question, separated by "
 - No explanation.
 - No introductory or concluding remarks from you.
 - Your first generated token should be a question.
+- Check the local db if there's new data.
 
-Your output should be a series of questions, with each response clearly separated by the string \`${SEPARATOR}\`. Do not include any other text, explanations, or introductory/concluding remarks outside the responses themselves.
-
-**Example of output**
-**Topic:** "Java Concurrency, synchronization good practices"
-**Output:**
-What is the primary purpose of the \`synchronized\` keyword in Java?
-${SEPARATOR}
-Explain the difference between \`volatile\` and \`synchronized\` keywords.
-${SEPARATOR}
-Describe the concept of "liveness" in the context of concurrent programming.
+Do not include any other text, explanations, or introductory/concluding remarks outside the responses themselves.
   `.trim(),
     });
 
-    return text
-      .split(SEPARATOR)
-      .filter(Boolean)
-      .map((i) => i.replace(/^\n+|\n+$/g, ''));
+    return this.formatList(
+      `
+Please format all these questions into a simple list without enumeration. 
+- Don't reduce the amount.
+- Remove pure duplicate questions.
+
+Here're the data
+${text}
+  `.trim(),
+    );
   }
 
   public async createResponse(
     topic: string,
     template: string,
     isGood: boolean,
+    params?: Partial<Record<'local_db', string> & Record<'web', boolean>>,
   ) {
     const { text } = await generateText({
       model: this.openaiResponseModel,
       prompt: template,
+      tools: this.getTools({
+        ...params,
+        tooling: this.configService.get('OPENAI_RESPONSE_TOOLING') === 'true',
+      }),
       temperature: 0.7,
       system: `
 You're a senior expert "${topic}".
-Your task is to generate a list of responses to a given question, separated by "${SEPARATOR}".
+Your task is to generate a list of responses to a given question.
 ${
   isGood &&
   `
@@ -97,40 +122,132 @@ Note:
 - Format in a way that the response are easy to read.
 - Create short responses.
 - No introduction.
-- No enumeration.
 - Use markdown formatting.
 - No HTML.
 - No conclusion.
 - No explanation.
 - Your first token should be a response already.
-
----
-
-Your output should be a series of responses, with each response clearly separated by the string \`${SEPARATOR}\`. Do not include any other text, explanations, or introductory/concluding remarks outside the responses themselves.
-
-**Example for good response**
-**Question:** "What is the capital of France?"
-**Output:**
-Paris is the capital and most populous city of France.
-${SEPARATOR}
-The capital of France is Paris, a major European city and global center for art, fashion, gastronomy, and culture.
-${SEPARATOR}
-Paris.
-
-**Example for Bad response**
-**Question:** "What is the capital of France?"
-**Output:**
-The capital of France is London.
-${SEPARATOR}
-France does not have a single capital city; it uses several administrative centers for different functions.
-${SEPARATOR}
-The Eiffel Tower is located in the capital of France, which is Berlin.
           `.trim(),
     });
 
-    return text
-      .split(SEPARATOR)
-      .filter(Boolean)
-      .map((i) => i.replace(/^\n+|\n+$/g, ''));
+    return this.formatList(
+      `
+Please format (and enhance if needed) this responses into a list without enumeration:
+
+${text}
+  `.trim(),
+    );
+  }
+
+  private async formatList(text: string) {
+    const { object } = await generateObject({
+      model: this.openaiSummarizerModel,
+      schema: z.object({
+        questions: z.array(z.string()),
+      }),
+      temperature: 0.3,
+      prompt: text,
+    });
+    return object;
+  }
+
+  private getTools({
+    web,
+    local_db,
+    tooling,
+  }: Partial<Record<'web' | 'tooling', boolean> & Record<'local_db', string>>):
+    | Record<string, any>
+    | undefined {
+    if (!tooling) {
+      return undefined;
+    }
+    if (!(local_db && web)) {
+      return undefined;
+    }
+
+    return {
+      search_local_db:
+        local_db &&
+        tool({
+          description: 'Search our data source',
+          parameters: z.object({
+            query: z.string().describe('The query of the search'),
+          }),
+          execute: async ({ query }) => {
+            try {
+              Logger.log(local_db, query, 'search_local_db');
+              const collection = await this.chromaCollection(local_db);
+              const result = await collection.query({
+                queryTexts: [query],
+              });
+
+              return {
+                query,
+                query_result: result,
+              };
+            } catch (error) {
+              Logger.log(query, error);
+              return {
+                query,
+                query_result: 'could not find any results.',
+              };
+            }
+          },
+        }),
+      save_to_local_db:
+        local_db &&
+        tool({
+          description:
+            'Save something our data source. Useful to speed-up future requests',
+          parameters: z.object({
+            text: z.string().describe('The text to save'),
+          }),
+          execute: async ({ text }) => {
+            try {
+              Logger.log(local_db, text, 'search_local_db');
+              const collection = await this.chromaCollection(local_db);
+              await collection.upsert({
+                documents: [text],
+                ids: [crypto.randomUUID()],
+              });
+
+              return {
+                text,
+                status: 'done',
+              };
+            } catch (error) {
+              Logger.log(text, error);
+              return {
+                text,
+                status: 'Could not save any results.',
+              };
+            }
+          },
+        }),
+      search_web:
+        web &&
+        tool({
+          description: 'Search the internet',
+          parameters: z.object({
+            query: z.string().describe('The query of the search'),
+          }),
+          execute: async ({ query }) => {
+            try {
+              Logger.log(query, 'search_web');
+              const result = await this.braveSearch.webSearch(query);
+              return {
+                query,
+                query_result: result.web,
+              };
+            } catch (error) {
+              Logger.error(query, error);
+              return {
+                query,
+                query_result: 'could not find any result',
+              };
+            }
+          },
+        }),
+    };
   }
 }

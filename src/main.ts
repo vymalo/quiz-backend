@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import * as compression from 'compression';
 
 async function bootstrap(port = process.env.PORT ?? 3000) {
   const app = await NestFactory.create(AppModule);
@@ -21,10 +22,22 @@ async function bootstrap(port = process.env.PORT ?? 3000) {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
+  app.useGlobalPipes(new ValidationPipe());
+  app.use(compression());
+
   await app.listen(port, () => {
     Logger.log(`Server is         running http://0.0.0.0:${port}`);
     Logger.log(`OpenAPI is        running http://0.0.0.0:${port}/api`);
     Logger.log(`OpenAPI Spec is   running http://0.0.0.0:${port}/api-json`);
+    Logger.log(
+      `Liveness at       running http://0.0.0.0:${port}/health/liveness`,
+    );
+    Logger.log(
+      `Readiness at      running http://0.0.0.0:${port}/health/readiness`,
+    );
+    Logger.log(
+      `Startup at        running http://0.0.0.0:${port}/health/startup`,
+    );
   });
 }
 bootstrap();

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
 
 export class CreateResponseDto {
   @ApiProperty({
@@ -6,11 +7,17 @@ export class CreateResponseDto {
       'The topic of the question for which the response is being submitted.',
     required: true,
   })
+  @IsNotEmpty({
+    message: '[topic] params shall be a string',
+  })
   topic: string;
 
   @ApiProperty({
     description: 'The specific question text to which to respond to.',
     required: true,
+  })
+  @IsNotEmpty({
+    message: '[question] params shall be a string',
   })
   question: string;
 
@@ -19,6 +26,10 @@ export class CreateResponseDto {
       'Optional complementary information related to the question or topic.',
     required: false,
   })
+  @IsString({
+    message: '[complement] params shall be a string if specified',
+  })
+  @ValidateIf((obj: CreateResponseDto) => !!obj.complement)
   complement?: string;
 
   @ApiProperty({
@@ -26,7 +37,32 @@ export class CreateResponseDto {
       'Optional additional instructions for evaluating the response.',
     required: false,
   })
+  @IsString({
+    message: '[extraPrompt] params shall be a string if specified',
+  })
+  @ValidateIf((obj: CreateResponseDto) => !!obj.extraPrompt)
   extraPrompt?: string;
+
+  @ApiProperty({
+    description: 'Optional toggle to activate web search.',
+    required: false,
+  })
+  @IsBoolean({
+    message: '[web] params shall be a string if specified',
+  })
+  @ValidateIf((obj: CreateResponseDto) => !!obj.web)
+  web?: boolean;
+
+  @ApiProperty({
+    description:
+      'Optional name of the database where are saved related data specific to the topic. Can and shall be reused across multiple requests, and also between question and responses.',
+    required: false,
+  })
+  @IsString({
+    message: '[local_db] params shall be a string if specified',
+  })
+  @ValidateIf((obj: CreateResponseDto) => !!obj.local_db)
+  local_db?: string;
 }
 
 export class ResponseDto {

@@ -2,7 +2,11 @@ import { Module } from '@nestjs/common';
 import { QuestionModule } from './question/question.module';
 import { ResponseModule } from './response/response.module';
 import { AiModule } from './ai/ai.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
+import { createKeyv, Keyv } from '@keyv/redis';
+import { CacheableMemory } from 'cacheable';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -10,6 +14,22 @@ import { ConfigModule } from '@nestjs/config';
     ResponseModule,
     AiModule,
     ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.registerAsync({
+      useFactory: (config: ConfigService) => ({
+        isGlobal: true,
+        stores: [
+          new Keyv({
+            store: new CacheableMemory({
+              ttl: config.get('CACHE_TTL'),
+              lruSize: 5000,
+            }),
+          }),
+          createKeyv(config.get('CACHE_REDIS_URL')),
+        ],
+      }),
+      inject: [ConfigService],
+    }),
+    HealthModule,
   ],
 })
 export class AppModule {}

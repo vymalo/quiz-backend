@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateQuestionDto, QuestionsDto } from './types';
 import { QuestionService } from './question.service';
+import { CacheKey, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('questions')
 @Controller('questions')
@@ -24,8 +25,10 @@ export class QuestionController {
   })
   @Post()
   @HttpCode(200)
+  @CacheTTL(200)
+  @CacheKey('create_question')
   public async createQuestions(@Body() dto: CreateQuestionDto) {
-    const questions = await this.service.createQuestions(dto);
+    const { questions } = await this.service.createQuestions(dto);
     return new QuestionsDto(questions);
   }
 }

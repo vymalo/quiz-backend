@@ -1,28 +1,89 @@
 # Default values for quiz-backend
 # This is a YAML-formatted file.
 
-global:
-  # -- Set an override for the prefix of the fullname
-  nameOverride: ""
-  # -- Set an override for the fullname
-  fullnameOverride: ""
+# -- Default values for common library chart
+common:
+  # -- Configure global settings
+  global:
+    # -- Set an override for the prefix of the fullname
+    nameOverride: ""
+    # -- Set an override for the fullname
+    fullnameOverride: ""
 
-# -- Configure image settings
-image:
-  # -- Image repository
-  repository: quiz-backend
-  # -- Image tag
-  tag: latest
-  # -- Image pull policy
-  pullPolicy: IfNotPresent
+# -- Configure controllers
+controllers:
+  main:
+    # -- Enable the controller
+    enabled: true
+    # -- Controller type, can be deployment, statefulset, daemonset, etc.
+    type: deployment
+    # -- Number of replicas
+    replicas: 1
+    # -- Strategy for updating the deployment
+    strategy: RollingUpdate
+    # -- Rolling update configuration
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    # -- Pod annotations
+    pod:
+      annotations: {}
+      securityContext: {}
+    
+    # -- Container configuration
+    containers:
+      main:
+        # -- Container image
+        image:
+          repository: quiz-backend
+          tag: latest
+          pullPolicy: IfNotPresent
+        
+        # -- Container resources
+        resources:
+          limits:
+            cpu: 300m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        
+        # -- Container security context
+        securityContext: {}
+        
+        # -- Container ports
+        ports:
+          http:
+            port: 3000
+            protocol: TCP
+        
+        # -- Container probes
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /health/liveness
+            port: http
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /health/readiness
+            port: http
+          startup:
+            enabled: true
+            type: HTTP
+            path: /health/startup
+            port: http
+        
+        # -- Environment variables
+        env:
+          NODE_ENV:
+            value: production
 
 # -- Image pull secrets
 imagePullSecrets: []
 
-# -- Environment variables for the container
-env:
-  # -- Set NODE_ENV for the application
-  NODE_ENV: production
+# -- Environment variables for the container (moved to controllers.main.containers.main.env)
 
 # -- Configure service account
 serviceAccount:
@@ -32,109 +93,67 @@ serviceAccount:
   annotations: {}
   # -- The name of the service account to use
   name: ""
-
-# -- Configure controller (deployment)
-controller:
-  # -- Controller type, can be deployment, statefulset, daemonset, etc.
-  type: deployment
-  # -- Number of replicas
-  replicas: 1
-  # -- Strategy for updating the deployment
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  # -- Pod annotations
-  podAnnotations: {}
-  # -- Pod security context
-  podSecurityContext: {}
-  # -- Container security context
-  securityContext: {}
-  # -- Autoscaling configuration
-  autoscaling:
-    enabled: false
-    minReplicas: 1
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 80
-    targetMemoryUtilizationPercentage: 80
-  # -- Container resources
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  # -- Container ports
-  ports:
-    http:
-      port: 3000
-      protocol: TCP
-  # -- Container probes
-  probes:
-    liveness:
-      enabled: true
-      path: /
-      port: http
-    readiness:
-      enabled: true
-      path: /
-      port: http
-    startup:
-      enabled: true
-      path: /
-      port: http
+  # -- Generate token for the service account
+  generateToken: false
 
 # -- Configure service
 service:
-  # -- Service type
-  type: ClusterIP
-  # -- Service port
-  ports:
-    http:
-      port: 80
-      targetPort: http
-      protocol: TCP
-  # -- Service annotations
-  annotations: {}
+  main:
+    # -- Enable the service
+    enabled: true
+    # -- Configure which controller this service should target
+    controller: main
+    # -- Make this the primary service
+    primary: true
+    # -- Service type
+    type: ClusterIP
+    # -- Service ports
+    ports:
+      http:
+        port: 80
+        targetPort: http
+        protocol: TCP
+    # -- Service annotations
+    annotations: {}
 
 # -- Configure ingress
 ingress:
-  # -- Enable ingress
-  enabled: false
-  # -- Ingress class name
-  className: ""
-  # -- Ingress annotations
-  annotations: {}
-  # -- Ingress hosts
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: Prefix
-  # -- Ingress TLS configuration
-  tls: []
+  main:
+    # -- Enable ingress
+    enabled: false
+    # -- Ingress class name
+    className: ""
+    # -- Ingress annotations
+    annotations: {}
+    # -- Ingress hosts
+    hosts:
+      - host: chart-example.local
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: main
+              port: http
+    # -- Ingress TLS configuration
+    tls: []
 
 # -- Configure persistence
 persistence:
-  # -- Enable persistence
-  enabled: false
-  # -- Persistence configuration
+  # -- Configure persistence items
   config:
+    # -- Enable persistence for the config volume
     enabled: false
-    mountPath: /app/config
-    accessMode: ReadWriteOnce
-    size: 1Gi
+    # -- Storage Class for the config volume
     storageClass: ""
-
-# -- Configure metrics
-metrics:
-  # -- Enable metrics
-  enabled: false
-  # -- Service monitor configuration
-  serviceMonitor:
-    enabled: false
+    # -- Access mode for the config volume
+    accessMode: ReadWriteOnce
+    # -- Size of the config volume
+    size: 1Gi
+    # -- Global mounts for the config volume
+    globalMounts:
+      - path: /app/config
+    # -- Advanced mounts configuration
+    advancedMounts: {}
 
 # -- Node selector
 nodeSelector: {}
