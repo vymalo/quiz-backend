@@ -1,17 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { generateObject, generateText, tool } from 'ai';
 import {
-  TOKEN_BRAVE_SEARCH,
-  TOKEN_CHROMA_COLLECTION,
   TOKEN_QUESTION_MODEL,
   TOKEN_RESPONSE_MODEL,
   TOKEN_SUMMARIZER_MODEL,
-} from './constants';
+} from '../constants';
 import type { LanguageModelV1 } from '@ai-sdk/provider';
 import { z } from 'zod';
-import type { Collection } from 'chromadb';
-import type { BraveSearch } from 'brave-search';
 import { ConfigService } from '@nestjs/config';
+import { DbService } from '../db/db.service';
+
+type CreateParams = Partial<Record<'knowledge_name', string>>;
 
 @Injectable()
 export class AiService {
@@ -22,26 +21,20 @@ export class AiService {
     private readonly openaiQuestionModel: LanguageModelV1,
     @Inject(TOKEN_RESPONSE_MODEL)
     private readonly openaiResponseModel: LanguageModelV1,
-    @Inject(TOKEN_CHROMA_COLLECTION)
-    private readonly chromaCollection: (
-      local_db: string,
-    ) => Promise<Collection>,
-    @Inject(TOKEN_BRAVE_SEARCH)
-    private readonly braveSearch: BraveSearch,
     private readonly configService: ConfigService,
+    private readonly dbService: DbService,
   ) {}
 
   public async createQuestion(
     topic: string,
     template: string,
-    params?: Partial<Record<'local_db', string> & Record<'web', boolean>>,
+    params?: CreateParams,
   ) {
+    const tooling =
+      this.configService.get('OPENAI_QUESTION_TOOLING') === 'true';
     const { text } = await generateText({
       model: this.openaiQuestionModel,
-      tools: this.getTools({
-        ...params,
-        tooling: this.configService.get('OPENAI_QUESTION_TOOLING') === 'true',
-      }),
+      tools: tooling && params ? this.getTools(params) : undefined,
       prompt: template,
       temperature: 0.7,
       system: `
@@ -60,7 +53,7 @@ Your task is to generate a list of responses to a given question.
 - No explanation.
 - No introductory or concluding remarks from you.
 - Your first generated token should be a question.
-- Check the local db if there's new data.
+- Check the knowledge base if there's new data.
 
 Do not include any other text, explanations, or introductory/concluding remarks outside the responses themselves.
   `.trim(),
@@ -82,15 +75,15 @@ ${text}
     topic: string,
     template: string,
     isGood: boolean,
-    params?: Partial<Record<'local_db', string> & Record<'web', boolean>>,
+    params?: CreateParams,
   ) {
+    const tooling =
+      this.configService.get('OPENAI_RESPONSE_TOOLING') === 'true';
+
     const { text } = await generateText({
       model: this.openaiResponseModel,
       prompt: template,
-      tools: this.getTools({
-        ...params,
-        tooling: this.configService.get('OPENAI_RESPONSE_TOOLING') === 'true',
-      }),
+      tools: tooling && params ? this.getTools(params) : undefined,
       temperature: 0.7,
       system: `
 You're a senior expert "${topic}".
@@ -152,102 +145,49 @@ ${text}
   }
 
   private getTools({
-    web,
-    local_db,
-    tooling,
-  }: Partial<Record<'web' | 'tooling', boolean> & Record<'local_db', string>>):
-    | Record<string, any>
-    | undefined {
-    if (!tooling) {
-      return undefined;
-    }
-    if (!(local_db && web)) {
+    knowledge_name,
+  }: CreateParams): Record<string, ReturnType<typeof tool>> | undefined {
+    if (!knowledge_name) {
       return undefined;
     }
 
-    return {
-      search_local_db:
-        local_db &&
-        tool({
-          description: 'Search our data source',
-          parameters: z.object({
-            query: z.string().describe('The query of the search'),
-          }),
-          execute: async ({ query }) => {
-            try {
-              Logger.log(local_db, query, 'search_local_db');
-              const collection = await this.chromaCollection(local_db);
-              const result = await collection.query({
-                queryTexts: [query],
-              });
+    const tools: Record<string, any> = {};
+    if (knowledge_name) {
+      tools.search_knowledge = tool({
+        description: 'Search our knowledge source',
+        parameters: z.object({
+          regex: z.string().describe('The regex for the search'),
+        }),
+        execute: async ({ regex }) => {
+          try {
+            Logger.log(knowledge_name, regex, 'search_knowledge');
+            const collection =
+              await this.dbService.getOrCreateCollection(knowledge_name);
+            const result = await collection.query({
+              whereDocument: {
+                $regex: regex,
+              },
+            });
 
-              return {
-                query,
-                query_result: result,
-              };
-            } catch (error) {
-              Logger.log(query, error);
-              return {
-                query,
-                query_result: 'could not find any results.',
-              };
-            }
-          },
-        }),
-      save_to_local_db:
-        local_db &&
-        tool({
-          description:
-            'Save something our data source. Useful to speed-up future requests',
-          parameters: z.object({
-            text: z.string().describe('The text to save'),
-          }),
-          execute: async ({ text }) => {
-            try {
-              Logger.log(local_db, text, 'search_local_db');
-              const collection = await this.chromaCollection(local_db);
-              await collection.upsert({
-                documents: [text],
-                ids: [crypto.randomUUID()],
-              });
+            return {
+              regex,
+              query_result: result,
+            };
+          } catch (error) {
+            Logger.log(regex, error);
+            return {
+              regex,
+              query_result: 'could not find any results.',
+            };
+          }
+        },
+      });
+    }
 
-              return {
-                text,
-                status: 'done',
-              };
-            } catch (error) {
-              Logger.log(text, error);
-              return {
-                text,
-                status: 'Could not save any results.',
-              };
-            }
-          },
-        }),
-      search_web:
-        web &&
-        tool({
-          description: 'Search the internet',
-          parameters: z.object({
-            query: z.string().describe('The query of the search'),
-          }),
-          execute: async ({ query }) => {
-            try {
-              Logger.log(query, 'search_web');
-              const result = await this.braveSearch.webSearch(query);
-              return {
-                query,
-                query_result: result.web,
-              };
-            } catch (error) {
-              Logger.error(query, error);
-              return {
-                query,
-                query_result: 'could not find any result',
-              };
-            }
-          },
-        }),
-    };
+    if (Object.keys(tools).length === 0) {
+      return undefined;
+    }
+
+    return tools;
   }
 }

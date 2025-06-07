@@ -7,6 +7,8 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
 import { HealthModule } from './health/health.module';
+import { DbModule } from './db/db.module';
+import { ModelModule } from './model/model.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { HealthModule } from './health/health.module';
       inject: [ConfigService],
     }),
     HealthModule,
+    DbModule,
+    ModelModule,
   ],
 })
 export class AppModule {}

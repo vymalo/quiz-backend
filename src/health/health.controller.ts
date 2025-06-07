@@ -6,6 +6,7 @@ import {
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
+import { ApiExcludeEndpoint } from '@nestjs/swagger';
 
 @Controller('health')
 export class HealthController {
@@ -16,6 +17,7 @@ export class HealthController {
     private readonly memory: MemoryHealthIndicator,
   ) {}
 
+  @ApiExcludeEndpoint(true)
   @Get('liveness')
   @HealthCheck()
   liveness() {
@@ -24,6 +26,7 @@ export class HealthController {
     ]);
   }
 
+  @ApiExcludeEndpoint(true)
   @Get('readiness')
   @HealthCheck()
   readiness() {
@@ -52,6 +55,7 @@ export class HealthController {
     ]);
   }
 
+  @ApiExcludeEndpoint(true)
   @Get('startup')
   @HealthCheck()
   startup() {

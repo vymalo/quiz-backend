@@ -11,12 +11,10 @@ export class ResponseService {
     const templateBad = this.prepareTemplate(dto, false);
     const [goodResponses, badResponses] = await Promise.all([
       this.aiService.createResponse(dto.topic, templateGood, true, {
-        local_db: dto.local_db,
-        web: dto.web,
+        knowledge_name: dto.knowledge_name_slug,
       }),
       this.aiService.createResponse(dto.topic, templateBad, false, {
-        local_db: dto.local_db,
-        web: dto.web,
+        knowledge_name: dto.knowledge_name_slug,
       }),
     ]);
 
@@ -32,8 +30,8 @@ ${isGood ? 'good' : 'wrong/bad'}
 ${dto.complement && 'Some complements:'}
 ${dto.complement ?? ''}
 
-${dto.extraPrompt && 'Additional prompt:'}
-${dto.extraPrompt ?? ''}
+${dto.extra_prompt && 'Additional prompt:'}
+${dto.extra_prompt ?? ''}
 
 Start now.
   `.trim();

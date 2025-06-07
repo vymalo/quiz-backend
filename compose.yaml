@@ -10,21 +10,7 @@ services:
     ports:
       - '3001:3000'
     environment:
-      OPENAI_QUESTION_BASE_URL: http://10.10.0.229:11434/v1
-      OPENAI_QUESTION_API_KEY: 
-      OPENAI_QUESTION_MODEL: gemma3:12b
-
-      OPENAI_RESPONSE_BASE_URL: http://10.10.0.229:11434/v1
-      OPENAI_RESPONSE_API_KEY: 
-      OPENAI_RESPONSE_MODEL: gemma3:12b
-
-      CHROMA_HOST: localhost
-      CHROMA_PORT: 8000
-      CHROMA_DATABASE: 
-      CHROMA_COLLECTION: quizz
-
-      BRAVE_SEARCH_API_KEY: 'sdsd'
-      
+      CACHE_REDIS_URL: redis://redis:6379    
     depends_on:
       chroma:
         condition: service_started
@@ -37,14 +23,16 @@ services:
       - chroma-data:/data
     ports:
       - "8000:8000"
-    healthcheck:
-      # Adjust below to match your container port
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     environment:
       IS_PERSISTENT: TRUE
+  
+  admin:
+    image: fengzhichao/chromadb-admin
+    ports:
+      - "3002:3001"
+    depends_on:
+      chroma:
+        condition: service_started
 
 volumes:
   chroma-data:

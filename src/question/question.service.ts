@@ -9,8 +9,7 @@ export class QuestionService {
   public async createQuestions(dto: CreateQuestionDto) {
     const template = this.prepareTemplate(dto);
     return this.aiService.createQuestion(dto.topic, template, {
-      local_db: dto.local_db,
-      web: dto.web,
+      knowledge_name: dto.knowledge_name_slug,
     });
   }
 
@@ -20,8 +19,8 @@ Please create questions about "${dto.topic}".
 ${dto.complement && 'More specifically:'}
 ${dto.complement ?? ''}
 
-${dto.extraPrompt && 'Additional prompt:'}
-${dto.extraPrompt ?? ''}
+${dto.extra_prompt && 'Additional prompt:'}
+${dto.extra_prompt ?? ''}
 
 Start now.
 `.trim();
