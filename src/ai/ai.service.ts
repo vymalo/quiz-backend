@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { generateObject, generateText, tool } from 'ai';
+import { generateObject, generateText, NoObjectGeneratedError, tool } from 'ai';
 import {
   TOKEN_QUESTION_MODEL,
   TOKEN_RESPONSE_MODEL,
@@ -9,6 +9,8 @@ import type { LanguageModelV1 } from '@ai-sdk/provider';
 import { z } from 'zod';
 import { ConfigService } from '@nestjs/config';
 import { DbService } from '../db/db.service';
+import { readFile } from 'fs-extra';
+import { join } from 'node:path';
 
 type CreateParams = Partial<Record<'knowledge_name', string>>;
 
@@ -32,31 +34,13 @@ export class AiService {
   ) {
     const tooling =
       this.configService.get('OPENAI_QUESTION_TOOLING') === 'true';
+    const systemPrompt = await this.readPrompt('create-question', { topic });
     const { text } = await generateText({
       model: this.openaiQuestionModel,
       tools: tooling && params ? this.getTools(params) : undefined,
       prompt: template,
       temperature: 0.7,
-      system: `
-You're a senior expert "${topic}".
-Your task is to generate a list of responses to a given question.
-
-- Format in a way that the questions are easy to read.
-- Use introduction.
-- Don't include answers.
-- They should be short and concise.
-- They should should be at least 15 items.
-- Use markdown formatting.
-- No HTML.
-- No response.
-- No conclusion.
-- No explanation.
-- No introductory or concluding remarks from you.
-- Your first generated token should be a question.
-- Check the knowledge base if there's new data.
-
-Do not include any other text, explanations, or introductory/concluding remarks outside the responses themselves.
-  `.trim(),
+      system: systemPrompt.trim(),
     });
 
     return this.formatList(
@@ -80,47 +64,17 @@ ${text}
     const tooling =
       this.configService.get('OPENAI_RESPONSE_TOOLING') === 'true';
 
+    const systemPrompt = await this.readPrompt(
+      isGood ? 'create-response-good' : 'create-response-bad',
+      { topic },
+    );
+
     const { text } = await generateText({
       model: this.openaiResponseModel,
       prompt: template,
       tools: tooling && params ? this.getTools(params) : undefined,
-      temperature: 0.7,
-      system: `
-You're a senior expert "${topic}".
-Your task is to generate a list of responses to a given question.
-${
-  isGood &&
-  `
-Generate responses that are:
-- Factually accurate and correct.
-- Directly answer the question.
-- Relevant and provide insightful, helpful, and complete information.
-- Clearly written and easy to understand.
-`.trim()
-}
-
-${
-  !isGood &&
-  `
-Generate responses that are:
-- Factually incorrect or misleading.
-- Irrelevant or do not directly answer the question.
-- Vague, incomplete, or lack necessary detail.
-- Subtly flawed or contain common misconceptions related to the topic.
-- Aim for plausible-sounding but incorrect/misleading answers where appropriate, rather than outright nonsensical ones.
-`.trim()
-}
-
-Note:
-- Format in a way that the response are easy to read.
-- Create short responses.
-- No introduction.
-- Use markdown formatting.
-- No HTML.
-- No conclusion.
-- No explanation.
-- Your first token should be a response already.
-          `.trim(),
+      temperature: 0,
+      system: systemPrompt.trim(),
     });
 
     return this.formatList(
@@ -132,16 +86,46 @@ ${text}
     );
   }
 
-  private async formatList(text: string) {
-    const { object } = await generateObject({
-      model: this.openaiSummarizerModel,
-      schema: z.object({
-        questions: z.array(z.string()),
-      }),
-      temperature: 0.3,
-      prompt: text,
-    });
-    return object;
+  private async formatList(
+    text: string,
+    counter = 0,
+  ): Promise<Record<'questions', string[]>> {
+    if (counter === 3) {
+      throw new Error('max custom retry reached');
+    }
+
+    try {
+      const { object } = await generateObject({
+        model: this.openaiSummarizerModel,
+        schema: z.object({
+          questions: z.array(z.string()),
+        }),
+        temperature: 0,
+        prompt: text,
+        maxRetries: 3,
+      });
+      return object;
+    } catch (error) {
+      if (NoObjectGeneratedError.isInstance(error)) {
+        console.log('NoObjectGeneratedError');
+        console.log('Cause:', error.cause);
+        console.log('Text:', error.text);
+        console.log('Response:', error.response);
+        console.log('Usage:', error.usage);
+        console.log('Finish Reason:', error.finishReason);
+        return this.formatList(text, 1 + counter);
+      }
+
+      throw error;
+    }
+  }
+
+  private async readPrompt(name: string, params: Record<string, string>) {
+    const prompt = await readFile(
+      join(process.cwd(), 'prompts', `${name}.md`),
+      'utf-8',
+    );
+    return prompt.replace(/\$\{(\w+)\}/g, (_, key) => params[key] ?? '');
   }
 
   private getTools({
@@ -174,7 +158,7 @@ ${text}
               query_result: result,
             };
           } catch (error) {
-            Logger.log(regex, error);
+            Logger.log('regex >', regex, error);
             return {
               regex,
               query_result: 'could not find any results.',

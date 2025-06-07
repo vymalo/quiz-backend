@@ -47,6 +47,7 @@ RUN addgroup -S -g 1001 nodejs && adduser -S nestjs -G nodejs -u 1001
 # Copy built application from the builder stage using mount
 COPY --from=production /app/deps ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY ./prompts ./prompts
 
 # .env file should be provided at runtime, not copied into the image.
 # Example: docker run -p 3000:3000 --env-file ./.env quiz-backend

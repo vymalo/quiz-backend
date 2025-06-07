@@ -9,14 +9,24 @@ export class ResponseService {
   public async createResponse(dto: CreateResponseDto) {
     const templateGood = this.prepareTemplate(dto, true);
     const templateBad = this.prepareTemplate(dto, false);
-    const [goodResponses, badResponses] = await Promise.all([
-      this.aiService.createResponse(dto.topic, templateGood, true, {
+
+    const goodResponses = await this.aiService.createResponse(
+      dto.topic,
+      templateGood,
+      true,
+      {
         knowledge_name: dto.knowledge_name_slug,
-      }),
-      this.aiService.createResponse(dto.topic, templateBad, false, {
+      },
+    );
+
+    const badResponses = await this.aiService.createResponse(
+      dto.topic,
+      templateBad,
+      false,
+      {
         knowledge_name: dto.knowledge_name_slug,
-      }),
-    ]);
+      },
+    );
 
     return { goodResponses, badResponses };
   }
