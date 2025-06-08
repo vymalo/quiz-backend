@@ -77,7 +77,7 @@ ${text}
       system: systemPrompt.trim(),
     });
 
-    return this.formatList(
+    return this.formatResponseList(
       `
 Please format (and enhance if needed) this responses into a list without enumeration:
 
@@ -120,6 +120,40 @@ ${text}
     }
   }
 
+  private async formatResponseList(
+    text: string,
+    counter = 0,
+  ): Promise<Record<'responses', string[]>> {
+    if (counter === 3) {
+      throw new Error('max custom retry reached');
+    }
+
+    try {
+      const { object } = await generateObject({
+        model: this.openaiSummarizerModel,
+        schema: z.object({
+          responses: z.array(z.string()),
+        }),
+        temperature: 0,
+        prompt: text,
+        maxRetries: 3,
+      });
+      return object;
+    } catch (error) {
+      if (NoObjectGeneratedError.isInstance(error)) {
+        console.log('NoObjectGeneratedError');
+        console.log('Cause:', error.cause);
+        console.log('Text:', error.text);
+        console.log('Response:', error.response);
+        console.log('Usage:', error.usage);
+        console.log('Finish Reason:', error.finishReason);
+        return this.formatResponseList(text, 1 + counter);
+      }
+
+      throw error;
+    }
+  }
+
   private async readPrompt(name: string, params: Record<string, string>) {
     const prompt = await readFile(
       join(process.cwd(), 'prompts', `${name}.md`),
@@ -155,7 +189,7 @@ ${text}
 
             return {
               regex,
-              query_result: result,
+              query_result: result.documents.flatMap((o) => o),
             };
           } catch (error) {
             Logger.log('regex >', regex, error);

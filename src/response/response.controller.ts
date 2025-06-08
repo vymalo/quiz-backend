@@ -28,6 +28,7 @@ export class ResponseController {
         summary: 'Basic response evaluation',
         value: {
           topic: 'JavaScript Promises',
+          response_type: 'good',
           question:
             'Explain the difference between Promise.all() and Promise.race()',
         },
@@ -37,6 +38,7 @@ export class ResponseController {
         value: {
           topic: 'JavaScript Promises',
           complement: 'Include error handling considerations',
+          response_type: 'bad',
           question:
             'Explain the difference between Promise.all() and Promise.race()',
         },
@@ -46,6 +48,7 @@ export class ResponseController {
         value: {
           topic: 'JavaScript Promises',
           complement: 'Include error handling considerations',
+          response_type: 'good',
           question:
             'Explain the difference between Promise.all() and Promise.race()',
           knowledge_name_slug: 'javascript',
@@ -64,10 +67,7 @@ export class ResponseController {
   @CacheTTL(200)
   @CacheKey('create_response')
   public async createResponse(@Body() dto: CreateResponseDto) {
-    const {
-      goodResponses: { questions: goodResponses },
-      badResponses: { questions: badResponses },
-    } = await this.service.createResponse(dto);
-    return new ResponsesDto(dto.question, goodResponses, badResponses);
+    const { responses } = await this.service.createResponse(dto);
+    return new ResponsesDto(dto.question, responses, dto.response_type);
   }
 }

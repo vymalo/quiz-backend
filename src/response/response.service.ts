@@ -1,34 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
-import { CreateResponseDto } from './types';
+import { CreateResponseDto, CreateResponseDtoType } from './types';
 
 @Injectable()
 export class ResponseService {
   constructor(private readonly aiService: AiService) {}
 
   public async createResponse(dto: CreateResponseDto) {
-    const templateGood = this.prepareTemplate(dto, true);
-    const templateBad = this.prepareTemplate(dto, false);
-
-    const goodResponses = await this.aiService.createResponse(
-      dto.topic,
-      templateGood,
-      true,
-      {
-        knowledge_name: dto.knowledge_name_slug,
-      },
+    const template = this.prepareTemplate(
+      dto,
+      dto.response_type === CreateResponseDtoType.good,
     );
 
-    const badResponses = await this.aiService.createResponse(
-      dto.topic,
-      templateBad,
-      false,
-      {
-        knowledge_name: dto.knowledge_name_slug,
-      },
-    );
-
-    return { goodResponses, badResponses };
+    return await this.aiService.createResponse(dto.topic, template, true, {
+      knowledge_name: dto.knowledge_name_slug,
+    });
   }
 
   private prepareTemplate(dto: CreateResponseDto, isGood: boolean) {

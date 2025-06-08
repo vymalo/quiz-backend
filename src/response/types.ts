@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, ValidateIf } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
+
+export enum CreateResponseDtoType {
+  good = 'good',
+  bad = 'bad',
+}
 
 export class CreateResponseDto {
   @ApiProperty({
@@ -27,6 +32,18 @@ export class CreateResponseDto {
     message: '[question] params shall be a string',
   })
   question: string;
+
+  @ApiProperty({
+    description: '',
+    required: true,
+    example: 'good',
+    enum: CreateResponseDtoType,
+    enumName: 'CreateResponseDtoType',
+  })
+  @IsEnum(CreateResponseDtoType, {
+    message: '[response_type] params shall be either "good" or "bad"',
+  })
+  response_type: CreateResponseDtoType;
 
   @ApiProperty({
     description:
@@ -122,17 +139,6 @@ export class ResponsesDto {
 
   @ApiProperty({
     description:
-      'The number of evaluation points marked as good/correct. ' +
-      'A higher number indicates a more accurate and complete response. ' +
-      'This can be compared with the total count to determine an overall correctness ratio.',
-    required: true,
-    type: Number,
-    example: 3,
-  })
-  public readonly count_good: number;
-
-  @ApiProperty({
-    description:
       'The original question text for which the response was submitted and evaluated. ' +
       'This is included for reference and context.',
     required: true,
@@ -142,15 +148,13 @@ export class ResponsesDto {
 
   constructor(
     question: string,
-    goodResponses: string[],
-    badResponses: string[],
+    responses: string[],
+    response_type: CreateResponseDtoType,
   ) {
-    this.responses = [
-      goodResponses.map((i) => new ResponseDto(i, true)),
-      badResponses.map((i) => new ResponseDto(i, false)),
-    ].flatMap((i) => i);
-    this.count = goodResponses.length + badResponses.length;
-    this.count_good = goodResponses.length;
+    this.responses = responses.map(
+      (i) => new ResponseDto(i, response_type === CreateResponseDtoType.good),
+    );
+    this.count = responses.length;
     this.question = question;
   }
 }
