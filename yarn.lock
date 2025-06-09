@@ -3794,13 +3794,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cacheable@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "cacheable@npm:1.9.0"
+"cacheable@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "cacheable@npm:1.10.0"
   dependencies:
     hookified: "npm:^1.8.2"
     keyv: "npm:^5.3.3"
-  checksum: 10c0/1ca171dd2f7c3a929d84b3f94e712cb8fbbfb7c636f19ba01657cf89c6ea4316f21f2beb6c696fa5c87d42f52620f4a7c2dfecb41bf71ee3b249d539895256c4
+  checksum: 10c0/3e1c4448baf939c004ba40b830aa79d85d1ff41bbf7e4e59c2f56f3e58d4cf162c7599b40b2ead27b0f96219892b2a8fc2e0026baf8e9c5a49196118385675ac
   languageName: node
   linkType: hard
 
@@ -7898,7 +7898,7 @@ __metadata:
     ai: "npm:^4.3.16"
     axios: "npm:^1.9.0"
     cache-manager: "npm:^6.4.3"
-    cacheable: "npm:^1.9.0"
+    cacheable: "npm:^1.10.0"
     chromadb: "npm:^3.0.1"
     class-transformer: "npm:^0.5.1"
     class-validator: "npm:^0.14.2"
