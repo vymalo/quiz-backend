@@ -3794,13 +3794,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cacheable@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "cacheable@npm:1.9.0"
+"cacheable@npm:^1.10.1":
+  version: 1.10.1
+  resolution: "cacheable@npm:1.10.1"
   dependencies:
-    hookified: "npm:^1.8.2"
-    keyv: "npm:^5.3.3"
-  checksum: 10c0/1ca171dd2f7c3a929d84b3f94e712cb8fbbfb7c636f19ba01657cf89c6ea4316f21f2beb6c696fa5c87d42f52620f4a7c2dfecb41bf71ee3b249d539895256c4
+    hookified: "npm:^1.10.0"
+    keyv: "npm:^5.3.4"
+  checksum: 10c0/2376587df607a84987dc13c0f334270a58056537ee0c0a41987e2523b41fea4bf313b6f4565cfb91319e58eb29944e830d4ef2b15db8715eb39d197e663f5a32
   languageName: node
   linkType: hard
 
@@ -5715,10 +5715,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hookified@npm:^1.8.2":
-  version: 1.9.1
-  resolution: "hookified@npm:1.9.1"
-  checksum: 10c0/345e4e28bedb00e2a733627f84374480c20833ca1b64b7aba07e61fbe793cee524e1e37312af7014f12ad572a8b6ab9d5d7b1804095779c45caf10bf6a2a0754
+"hookified@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "hookified@npm:1.10.0"
+  checksum: 10c0/d4e5263e4d7ed1f6dfb1aa2928857878e9c0c82de2451892bb8574fb0de2b6c9e758686f0b63ab34976f52866d687b5fd7e147ff0c7115a5584ff79dda09439e
   languageName: node
   linkType: hard
 
@@ -6723,6 +6723,15 @@ __metadata:
   dependencies:
     "@keyv/serialize": "npm:^1.0.3"
   checksum: 10c0/6b9064d061784e80a5dc500453b03cacb099f06fddd0346063519371d563a66771237e04467f3387b60d8a33a3c99864288991274921fb1338c6adf638574924
+  languageName: node
+  linkType: hard
+
+"keyv@npm:^5.3.4":
+  version: 5.3.4
+  resolution: "keyv@npm:5.3.4"
+  dependencies:
+    "@keyv/serialize": "npm:^1.0.3"
+  checksum: 10c0/d6f62dceca7361986d800943749ad41e907cf87676aa4c259ffe09379a46c6606f532513744db0479a61f0732c12eaf5cd2dfc39427fad4db0d7e4955627c503
   languageName: node
   linkType: hard
 
@@ -7898,7 +7907,7 @@ __metadata:
     ai: "npm:^4.3.16"
     axios: "npm:^1.9.0"
     cache-manager: "npm:^6.4.3"
-    cacheable: "npm:^1.9.0"
+    cacheable: "npm:^1.10.1"
     chromadb: "npm:^3.0.1"
     class-transformer: "npm:^0.5.1"
     class-validator: "npm:^0.14.2"
