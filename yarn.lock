@@ -3763,12 +3763,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cache-manager@npm:^6.4.3":
-  version: 6.4.3
-  resolution: "cache-manager@npm:6.4.3"
+"cache-manager@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "cache-manager@npm:7.0.1"
   dependencies:
-    keyv: "npm:^5.3.3"
-  checksum: 10c0/eb5af37e2206cf01390bf61ddd86d3cb86f281700a2621393835ac4f9bdd5872a618765f643fce76d1cbb56f512a13cef502665fb6259be9c16d5121c713a1f7
+    keyv: "npm:^5.3.4"
+  checksum: 10c0/c4d3cf1b9c6cc7f9a046053a1797edea1a34b5fc545f889d31994133d95953a6100e6163b34a1caa0a4754f08cdaafaebddc718c46c84f3ba1b205450473aace
   languageName: node
   linkType: hard
 
@@ -6726,6 +6726,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"keyv@npm:^5.3.4":
+  version: 5.3.4
+  resolution: "keyv@npm:5.3.4"
+  dependencies:
+    "@keyv/serialize": "npm:^1.0.3"
+  checksum: 10c0/d6f62dceca7361986d800943749ad41e907cf87676aa4c259ffe09379a46c6606f532513744db0479a61f0732c12eaf5cd2dfc39427fad4db0d7e4955627c503
+  languageName: node
+  linkType: hard
+
 "kind-of@npm:^6.0.2":
   version: 6.0.3
   resolution: "kind-of@npm:6.0.3"
@@ -7897,7 +7906,7 @@ __metadata:
     "@types/supertest": "npm:^6.0.2"
     ai: "npm:^4.3.16"
     axios: "npm:^1.9.0"
-    cache-manager: "npm:^6.4.3"
+    cache-manager: "npm:^7.0.1"
     cacheable: "npm:^1.9.0"
     chromadb: "npm:^3.0.1"
     class-transformer: "npm:^0.5.1"
