@@ -185,7 +185,7 @@ service:
 ingress:
   main:
     # -- Enable ingress
-    enabled: true
+    enabled: false
     # -- Ingress class name
     className: ""
     # -- Ingress annotations
@@ -201,24 +201,6 @@ ingress:
               port: http
     # -- Ingress TLS configuration
     tls: [ ]
-
-# -- Configure persistence
-persistence:
-  # -- Configure persistence items
-  config:
-    # -- Enable persistence for the config volume
-    enabled: false
-    # -- Storage Class for the config volume
-    storageClass: ""
-    # -- Access mode for the config volume
-    accessMode: ReadWriteOnce
-    # -- Size of the config volume
-    size: 1Gi
-    # -- Global mounts for the config volume
-    globalMounts:
-      - path: /app/config
-    # -- Advanced mounts configuration
-    advancedMounts: { }
 
 # -- Node selector
 nodeSelector: { }
