@@ -139,7 +139,7 @@ controllers:
 
           CHROMA_HOST: localhost
           CHROMA_PORT: 8000
-          CHROMA_DATABASE: ~
+          #CHROMA_DATABASE: ~
           CHROMA_COLLECTION_PREFIX: quizz_
 
           CACHE_TTL: 60000
