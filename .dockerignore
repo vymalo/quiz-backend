@@ -1,5 +1,6 @@
 *
 !src
+!prompts
 !package.json
 !yarn.lock
 !tsconfig.json
