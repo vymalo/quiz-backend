@@ -34,7 +34,7 @@ export class CreateResponseDto {
   question: string;
 
   @ApiProperty({
-    description: '',
+    description: '[response_type] params shall be either "good" or "bad"',
     required: true,
     example: 'good',
     enum: CreateResponseDtoType,
