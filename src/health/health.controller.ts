@@ -7,6 +7,7 @@ import {
 } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
+import { UrlBuilder } from '@innova2/url-builder';
 
 @Controller('health')
 export class HealthController {
@@ -21,9 +22,7 @@ export class HealthController {
   @Get('liveness')
   @HealthCheck()
   liveness() {
-    return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-    ]);
+    return this.health.check([() => this.checkHeap()]);
   }
 
   @ApiExcludeEndpoint(true)
@@ -31,26 +30,30 @@ export class HealthController {
   @HealthCheck()
   readiness() {
     return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+      () => this.checkHeap(),
       () =>
-        this.http.pingCheck(
+        this.getOpenAiCompatibleHealthCheck(
           'question-open-ai',
-          this.configService.get('OPENAI_QUESTION_BASE_URL') + '/models',
+          'OPENAI_QUESTION_BASE_URL',
+          'OPENAI_QUESTION_API_KEY',
         ),
       () =>
-        this.http.pingCheck(
+        this.getOpenAiCompatibleHealthCheck(
           'response-open-ai',
-          this.configService.get('OPENAI_RESPONSE_BASE_URL') + '/models',
+          'OPENAI_RESPONSE_BASE_URL',
+          'OPENAI_RESPONSE_API_KEY',
         ),
       () =>
-        this.http.pingCheck(
+        this.getOpenAiCompatibleHealthCheck(
           'summarizer-open-ai',
-          this.configService.get('OPENAI_SUMMARIZER_BASE_URL') + '/models',
+          'OPENAI_SUMMARIZER_BASE_URL',
+          'OPENAI_SUMMARIZER_API_KEY',
         ),
       () =>
-        this.http.pingCheck(
+        this.getOpenAiCompatibleHealthCheck(
           'embedding-open-ai',
-          this.configService.get('OPENAI_EMBEDDING_BASE_URL') + '/models',
+          'OPENAI_EMBEDDING_BASE_URL',
+          'OPENAI_EMBEDDING_API_KEY',
         ),
     ]);
   }
@@ -59,8 +62,26 @@ export class HealthController {
   @Get('startup')
   @HealthCheck()
   startup() {
-    return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-    ]);
+    return this.health.check([() => this.checkHeap()]);
+  }
+
+  private checkHeap() {
+    return this.memory.checkHeap('memory-heap', 800 * 1024 * 1024);
+  }
+
+  private getOpenAiCompatibleHealthCheck(
+    key: string,
+    urlKey: string,
+    apiKeyKey: string,
+  ) {
+    const apiKey: string | undefined = this.configService.get(apiKeyKey);
+    const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined;
+    const urlBuilder = UrlBuilder.createFromUrl(
+      this.configService.getOrThrow(urlKey),
+    );
+    const url = urlBuilder.addPath('/models');
+    const finalUrl = url.toString();
+
+    return this.http.pingCheck(key, finalUrl, { headers });
   }
 }
