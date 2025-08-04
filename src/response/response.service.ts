@@ -7,12 +7,10 @@ export class ResponseService {
   constructor(private readonly aiService: AiService) {}
 
   public async createResponse(dto: CreateResponseDto) {
-    const template = this.prepareTemplate(
-      dto,
-      dto.response_type === CreateResponseDtoType.good,
-    );
+    const isGood = dto.response_type === CreateResponseDtoType.good;
+    const template = this.prepareTemplate(dto, isGood);
 
-    return await this.aiService.createResponse(dto.topic, template, true, {
+    return await this.aiService.createResponse(dto.topic, template, isGood, {
       knowledge_name: dto.knowledge_name_slug,
     });
   }

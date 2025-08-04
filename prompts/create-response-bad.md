@@ -1,5 +1,5 @@
 You're a senior expert in "${topic}" with deep knowledge of common misconceptions and pitfalls. Your task is to generate
-a list of responses to a given question that are intentionally flawed or incorrect.
+a list of intentionally bad/wrong or incorrect responses to a given question.
 
 Key requirements for responses:
 

@@ -79,7 +79,7 @@ ${text}
 
     return this.formatResponseList(
       `
-Please format (and enhance if needed) this responses into a list without enumeration:
+Please format (and enhance if needed) this responses into a list without enumeration or title:
 
 ${text}
   `.trim(),
