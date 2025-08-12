@@ -24,7 +24,7 @@
     "@chroma-core/default-embed": "^0.1.8",
     "@innova2/url-builder": "^4.0.0",
     "@keyv/redis": "^4.4.0",
-    "@nestjs/axios": "^4.0.0",
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
