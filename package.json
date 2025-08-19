@@ -32,7 +32,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/terminus": "^11.0.0",
-    "ai": "^4.3.16",
+    "ai": "^5.0.15",
     "axios": "^1.10.0",
     "cache-manager": "^6.4.3",
     "cacheable": "^1.10.3",
